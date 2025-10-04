@@ -1,10 +1,14 @@
-it("Email yanlış girdim", () => {
+it("Yanlış email girildiğinde hata mesajı ve submit butonu disabled olmalı", () => {
   cy.visit("http://localhost:5173");
+
+  // Yanlış email gir
   cy.get('[data-cy="email-input"]').type("Beyza");
-  cy.get('[data-cy="password-input"]').type("StrongP@ss1");
-  cy.get('[data-cy="terms-checkbox"]').check();
-  cy.get('[data-cy="submit-btn"]').click();
-  cy.on("window:alert", (text) => {
-    expect(text).to.contains("Lütfen geçerli bir e-posta adresi girin!");
-  });
+
+  // Hata mesajı görünür ve doğru
+  cy.get('[data-cy="error-msg"]')
+    .should("have.length", 1)
+    .and("contain.text", "Lütfen geçerli bir e-posta adresi girin!");
+
+  // Submit butonu disabled olmalı
+  cy.get('[data-cy="submit-btn"]').should("have.attr", "disabled");
 });

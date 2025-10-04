@@ -1,77 +1,69 @@
-// src/components/Login.jsx
 import { useState } from "react";
 import { Form, FormGroup, Label, Input, Button } from "reactstrap";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-const initialForm = {
-  email: "",
-  password: "",
-  terms: false,
-};
+const initialForm = { email: "", password: "", terms: false };
 
-// Email doğrulama
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
-
-// Strong password doğrulama
-const isStrongPassword = (password) => {
-  const strongPasswordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-  return strongPasswordRegex.test(password);
-};
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isStrongPassword = (password) =>
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/.test(
+    password
+  );
 
 export default function Login() {
   const [form, setForm] = useState(initialForm);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
-  const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    // Kullanıcı yazarken hata mesajını temizle
-    if (errorMessage) setErrorMessage("");
+    // Anlık validation
+    if (name === "email") {
+      if (!value) {
+        setErrorMessage("Email alanı boş olamaz!");
+      } else if (!isValidEmail(value)) {
+        setErrorMessage("Lütfen geçerli bir e-posta adresi girin!");
+      } else {
+        setErrorMessage("");
+      }
+    }
+
+    if (name === "password") {
+      if (!value) {
+        setErrorMessage("Lütfen şifrenizi girin.");
+      } else if (!isStrongPassword(value)) {
+        setErrorMessage(
+          "Şifre en az 8 karakter, büyük harf, küçük harf, rakam ve özel karakter içermelidir."
+        );
+      } else {
+        setErrorMessage("");
+      }
+    }
+
+    if (name === "terms" && !checked) {
+      setErrorMessage("Kullanım koşullarını kabul etmelisiniz.");
+    } else if (name === "terms" && checked) {
+      setErrorMessage("");
+    }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    // Email kontrolü
-    if (!isValidEmail(form.email)) {
-      setErrorMessage("Lütfen geçerli bir e-posta adresi girin!");
-      return;
-    }
-
-    // Password kontrolü
-    if (!form.password) {
-      setErrorMessage("Lütfen şifrenizi girin.");
-      return;
-    }
-
-    if (!isStrongPassword(form.password)) {
-      setErrorMessage(
-        "Şifre en az 8 karakter, büyük harf, küçük harf, rakam ve özel karakter içermelidir."
-      );
-      return;
-    }
-
-    // Checkbox kontrolü
-    if (!form.terms) {
-      setErrorMessage("Kullanım koşullarını kabul etmelisiniz.");
+    // Eğer frontend validation'da hata varsa submit etme
+    if (errorMessage || !form.email || !form.password || !form.terms) {
       return;
     }
 
     setLoading(true);
-    setErrorMessage("");
-
     try {
       const res = await axios.get(
         "https://6540a96145bedb25bfc247b4.mockapi.io/api/login"
@@ -85,10 +77,9 @@ export default function Login() {
         setForm(initialForm);
         navigate("/main");
       } else {
-        navigate("/error");
+        setErrorMessage("Email veya şifre hatalı!");
       }
     } catch (err) {
-      console.error(err);
       setErrorMessage("Sunucuya bağlanırken hata oluştu. Tekrar deneyin.");
     } finally {
       setLoading(false);
@@ -96,45 +87,33 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
+      <div className="max-w-md bg-white rounded-2xl shadow-md p-6">
         <h2 className="text-2xl font-semibold mb-4 text-center">Sign In</h2>
 
         <Form onSubmit={handleSubmit} data-cy="login-form">
           <FormGroup>
-            <Label
-              for="exampleEmail"
-              className="block text-sm font-medium mb-1"
-            >
-              Email
-            </Label>
+            <Label for="exampleEmail">Email</Label>
             <Input
               id="exampleEmail"
               name="email"
-              placeholder="Enter your email"
               type="email"
+              placeholder="Enter your email"
               onChange={handleChange}
               value={form.email}
-              className="form-input w-full rounded-md border-gray-300 p-2"
               data-cy="email-input"
             />
           </FormGroup>
 
           <FormGroup>
-            <Label
-              for="examplePassword"
-              className="block text-sm font-medium mb-1"
-            >
-              Password
-            </Label>
+            <Label for="examplePassword">Password</Label>
             <Input
               id="examplePassword"
               name="password"
-              placeholder="Enter your password"
               type="password"
+              placeholder="Enter your password"
               onChange={handleChange}
               value={form.password}
-              className="form-input w-full rounded-md border-gray-300 p-2"
               data-cy="password-input"
             />
           </FormGroup>
@@ -154,7 +133,7 @@ export default function Login() {
           </FormGroup>
 
           {errorMessage && (
-            <p className="error text-sm text-red-600 mb-3" data-cy="error-msg">
+            <p className="text-sm text-red-600 mb-3" data-cy="error-msg">
               {errorMessage}
             </p>
           )}
@@ -171,13 +150,6 @@ export default function Login() {
             </Button>
           </FormGroup>
         </Form>
-
-        <div className="text-xs text-center text-gray-500 mt-2">
-          <span>Don't have an account? </span>
-          <a href="/register" className="text-blue-600 hover:underline">
-            Sign up
-          </a>
-        </div>
       </div>
     </div>
   );
