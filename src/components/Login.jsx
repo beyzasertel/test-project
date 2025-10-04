@@ -105,6 +105,7 @@ export default function Login() {
               type="email"
               placeholder="Enter your email"
               onChange={handleChange}
+              onBlur={handleChange}
               value={form.email}
               data-cy="email-input"
             />
@@ -124,6 +125,7 @@ export default function Login() {
               type="password"
               placeholder="Enter your password"
               onChange={handleChange}
+              onBlur={handleChange}
               value={form.password}
               data-cy="password-input"
             />
