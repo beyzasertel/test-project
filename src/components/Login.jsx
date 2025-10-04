@@ -10,9 +10,17 @@ const initialForm = {
   terms: false,
 };
 
+// Email doğrulama
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+};
+
+// Strong password doğrulama
+const isStrongPassword = (password) => {
+  const strongPasswordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+  return strongPasswordRegex.test(password);
 };
 
 export default function Login() {
@@ -29,24 +37,33 @@ export default function Login() {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    // Clear error message as user types
+    // Kullanıcı yazarken hata mesajını temizle
     if (errorMessage) setErrorMessage("");
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Front-end validation
+    // Email kontrolü
     if (!isValidEmail(form.email)) {
       setErrorMessage("Lütfen geçerli bir e-posta adresi girin!");
       return;
     }
 
+    // Password kontrolü
     if (!form.password) {
       setErrorMessage("Lütfen şifrenizi girin.");
       return;
     }
 
+    if (!isStrongPassword(form.password)) {
+      setErrorMessage(
+        "Şifre en az 8 karakter, büyük harf, küçük harf, rakam ve özel karakter içermelidir."
+      );
+      return;
+    }
+
+    // Checkbox kontrolü
     if (!form.terms) {
       setErrorMessage("Kullanım koşullarını kabul etmelisiniz.");
       return;
@@ -144,6 +161,7 @@ export default function Login() {
 
           <FormGroup className="text-center p-4">
             <Button
+              type="submit"
               color="primary"
               disabled={!form.terms || loading}
               className="w-full rounded-md"
