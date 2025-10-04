@@ -1,7 +1,9 @@
-import "./App.css";
 import Login from "./components/Login";
 import "./components/Layout.css";
 import { Routes, Route } from "react-router-dom";
+
+import "bootstrap/dist/css/bootstrap.min.css"; // Reactstrap
+import "./index.css";
 
 function App() {
   return (

@@ -1,7 +1,7 @@
+// src/components/Login.jsx
 import { useState } from "react";
 import { Form, FormGroup, Label, Input, Button } from "reactstrap";
 import { useNavigate } from "react-router-dom";
-
 import axios from "axios";
 
 const initialForm = {
@@ -17,90 +17,150 @@ const isValidEmail = (email) => {
 
 export default function Login() {
   const [form, setForm] = useState(initialForm);
-  const [formValidation, setFormValidation] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const handleChange = (event) => {
-    let { name, value, type, checked } = event.target;
-    setForm({ ...form, [name]: value });
+    const { name, value, type, checked } = event.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
 
-    if (checked) {
-      setFormValidation(true);
-    } else {
-      setFormValidation(false);
-    }
+    // Clear error message as user types
+    if (errorMessage) setErrorMessage("");
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
+    // Front-end validation
     if (!isValidEmail(form.email)) {
       setErrorMessage("Lütfen geçerli bir e-posta adresi girin!");
       return;
     }
 
-    axios
-      .get("https://6540a96145bedb25bfc247b4.mockapi.io/api/login")
-      .then((res) => {
-        const user = res.data.find(
-          (item) => item.password == form.password && item.email == form.email
-        );
-        if (user) {
-          setForm(initialForm);
-          history.push("/main");
-        } else {
-          history.push("/error");
-        }
-      });
+    if (!form.password) {
+      setErrorMessage("Lütfen şifrenizi girin.");
+      return;
+    }
+
+    if (!form.terms) {
+      setErrorMessage("Kullanım koşullarını kabul etmelisiniz.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const res = await axios.get(
+        "https://6540a96145bedb25bfc247b4.mockapi.io/api/login"
+      );
+
+      const user = res.data.find(
+        (item) => item.password === form.password && item.email === form.email
+      );
+
+      if (user) {
+        setForm(initialForm);
+        navigate("/main");
+      } else {
+        navigate("/error");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Sunucuya bağlanırken hata oluştu. Tekrar deneyin.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
-      <FormGroup>
-        <Label for="exampleEmail">Email</Label>
-        <Input
-          id="exampleEmail"
-          name="email"
-          placeholder="Enter your email"
-          type="email"
-          onChange={handleChange}
-          value={form.email}
-        />
-        {errorMessage && <p className="error">{errorMessage}</p>}
-      </FormGroup>
-      <FormGroup>
-        <Label for="examplePassword">Password</Label>
-        <Input
-          id="examplePassword"
-          name="password"
-          placeholder="Enter your password "
-          type="password"
-          onChange={handleChange}
-          value={form.password}
-        />
-      </FormGroup>
-      {/* reactstrap checkbox ekleyelim*/}
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6">
+        <h2 className="text-2xl font-semibold mb-4 text-center">Sign In</h2>
 
-      <FormGroup>
-        <Label for="terms">
-          I agree to terms of service and privacy policy
-        </Label>
-        <Input
-          id="terms"
-          name="terms"
-          type="checkbox"
-          onChange={handleChange}
-          value={form.terms}
-        />
-      </FormGroup>
+        <Form onSubmit={handleSubmit} data-cy="login-form">
+          <FormGroup>
+            <Label
+              for="exampleEmail"
+              className="block text-sm font-medium mb-1"
+            >
+              Email
+            </Label>
+            <Input
+              id="exampleEmail"
+              name="email"
+              placeholder="Enter your email"
+              type="email"
+              onChange={handleChange}
+              value={form.email}
+              className="form-input w-full rounded-md border-gray-300 p-2"
+              data-cy="email-input"
+            />
+          </FormGroup>
 
-      <FormGroup className="text-center p-4">
-        <Button color="primary" disabled={!formValidation}>
-          Sign In
-        </Button>
-      </FormGroup>
-    </Form>
+          <FormGroup>
+            <Label
+              for="examplePassword"
+              className="block text-sm font-medium mb-1"
+            >
+              Password
+            </Label>
+            <Input
+              id="examplePassword"
+              name="password"
+              placeholder="Enter your password"
+              type="password"
+              onChange={handleChange}
+              value={form.password}
+              className="form-input w-full rounded-md border-gray-300 p-2"
+              data-cy="password-input"
+            />
+          </FormGroup>
+
+          <FormGroup check className="flex items-center space-x-2 my-3">
+            <Input
+              id="terms"
+              name="terms"
+              type="checkbox"
+              onChange={handleChange}
+              checked={form.terms}
+              data-cy="terms-checkbox"
+            />
+            <Label for="terms" className="mb-0 select-none text-sm">
+              I agree to terms of service and privacy policy
+            </Label>
+          </FormGroup>
+
+          {errorMessage && (
+            <p className="error text-sm text-red-600 mb-3" data-cy="error-msg">
+              {errorMessage}
+            </p>
+          )}
+
+          <FormGroup className="text-center p-4">
+            <Button
+              color="primary"
+              disabled={!form.terms || loading}
+              className="w-full rounded-md"
+              data-cy="submit-btn"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </Button>
+          </FormGroup>
+        </Form>
+
+        <div className="text-xs text-center text-gray-500 mt-2">
+          <span>Don't have an account? </span>
+          <a href="/register" className="text-blue-600 hover:underline">
+            Sign up
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
