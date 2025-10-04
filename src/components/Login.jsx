@@ -10,6 +10,11 @@ const initialForm = {
   terms: false,
 };
 
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 export default function Login() {
   const [form, setForm] = useState(initialForm);
   const [formValidation, setFormValidation] = useState(false);
@@ -29,6 +34,11 @@ export default function Login() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    if (!isValidEmail(form.email)) {
+      alert("Lütfen geçerli bir e-posta adresi girin!");
+      return;
+    }
 
     axios
       .get("https://6540a96145bedb25bfc247b4.mockapi.io/api/login")
