@@ -18,6 +18,7 @@ const isValidEmail = (email) => {
 export default function Login() {
   const [form, setForm] = useState(initialForm);
   const [formValidation, setFormValidation] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const history = useNavigate();
 
@@ -36,7 +37,7 @@ export default function Login() {
     event.preventDefault();
 
     if (!isValidEmail(form.email)) {
-      alert("Lütfen geçerli bir e-posta adresi girin!");
+      setErrorMessage("Lütfen geçerli bir e-posta adresi girin!");
       return;
     }
 
@@ -67,6 +68,7 @@ export default function Login() {
           onChange={handleChange}
           value={form.email}
         />
+        {errorMessage && <p className="error">{errorMessage}</p>}
       </FormGroup>
       <FormGroup>
         <Label for="examplePassword">Password</Label>
